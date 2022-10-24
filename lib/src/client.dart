@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:amaxdart/src/models/currency.dart';
 import 'package:amaxdart_ecc/amaxdart_ecc.dart' as ecc;
 import 'package:http/http.dart' as http;
 
@@ -64,15 +65,14 @@ class AMAXClient {
             body: json.encode(body))
         .timeout(Duration(seconds: this.httpTimeout))
         .then((http.Response response) {
-          if (response.statusCode >= 300) {
-            completer.completeError(response.body);
-          } else {
-            completer.complete(json.decode(response.body));
-          }
-        })
-        .catchError((error, stackTrace) {
-          completer.completeError(error.toString());
-        });
+      if (response.statusCode >= 300) {
+        completer.completeError(response.body);
+      } else {
+        completer.complete(json.decode(response.body));
+      }
+    }).catchError((error, stackTrace) {
+      completer.completeError(error.toString());
+    });
     return completer.future;
   }
 
@@ -195,12 +195,20 @@ class AMAXClient {
     });
   }
 
-  /// Get AMAX account info form the given account name
+  /// Get AMAX account currency balance
   Future<List<Holding>> getCurrencyBalance(String code, String account,
       [String? symbol]) async {
     return this._post('/chain/get_currency_balance',
         {'code': code, 'account': account, 'symbol': symbol}).then((balance) {
       return (balance as List).map((e) => new Holding.fromJson(e)).toList();
+    });
+  }
+
+  /// Get AMAX account currency stats
+  Future<CurrencyStatus> getCurrencyStats(String code, String symbol) async {
+    return this._post('/chain/get_currency_stats',
+        {'code': code, 'symbol': symbol}).then((data) {
+      return CurrencyStatus.fromJson(data[symbol]);
     });
   }
 
@@ -258,8 +266,9 @@ class AMAXClient {
       bool autoFill = true}) async {
     NodeInfo info = await this.getInfo();
 
-    if(autoFill) {
-      Block refBlock = await getBlock((info.headBlockNum! - blocksBehind).toString());
+    if (autoFill) {
+      Block refBlock =
+          await getBlock((info.headBlockNum! - blocksBehind).toString());
       transaction = await _fullFill(transaction, refBlock);
     }
 
@@ -306,7 +315,7 @@ class AMAXClient {
   /// serialize actions in a transaction
   Future<Transaction> _serializeActions(Transaction transaction) async {
     for (Action action in transaction.actions!) {
-      if(action.data is Map) {
+      if (action.data is Map) {
         String account = action.account!;
         Contract contract = await _getContract(account);
         action.data =
