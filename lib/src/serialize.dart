@@ -566,7 +566,7 @@ Symbol stringToSymbol(String s) {
   if (!exp.hasMatch(s)) {
     throw 'Invalid symbol';
   }
-  return Symbol(name: m[2].toString(), precision: int.parse([1].toString()));
+  return Symbol(name: m[0].group(2).toString(), precision: int.parse(m[0].group(1).toString()));
 }
 
 /// Convert `Symbol` to `string`. format: `precision,NAME`. */
