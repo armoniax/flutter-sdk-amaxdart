@@ -802,7 +802,7 @@ Map<String, Type> createInitialTypes() {
         SerializerState? state,
         required bool allowExtensions,
       }) {
-        buffer.pushArray(numeric.decimalToBinary(8, '' + data));
+        buffer.pushArray(numeric.decimalToBinary(8, data.toString()));
       },
       deserialize: (
         Type self,

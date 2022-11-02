@@ -290,8 +290,7 @@ class AMAXClient {
   }
 
   /// Get data needed to serialize actions in a contract */
-  Future<Contract> _getContract(String accountName,
-      {bool reload = false}) async {
+  Future<Contract> _getContract(String accountName) async {
     var abi = await getRawAbi(accountName);
     var types = ser.getTypesFromAbi(ser.createInitialTypes(), abi.abi!);
     var actions = new Map<String, Type>();
@@ -328,7 +327,7 @@ class AMAXClient {
   /// Convert action data to serialized form (hex) */
   String _serializeActionData(
       Contract contract, String account, String name, Object data) {
-    var action = contract.actions[name];
+    Type? action = contract.actions[name];
     if (action == null) {
       throw "Unknown action $name in contract $account";
     }
@@ -356,7 +355,6 @@ class AMAXClient {
 
     RequiredKeys requiredKeys =
         await getRequiredKeys(transaction, this.keys.keys.toList());
-
     Uint8List serializedTrx = transaction.toBinary(transactionType);
 
     if (sign) {
