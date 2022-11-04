@@ -274,15 +274,12 @@ class AMAXClient {
 
     PushTransactionArgs pushTransactionArgs = await _pushTransactionArgs(
         info.chainId!, transactionTypes['transaction']!, transaction, sign);
-
     if (broadcast) {
-      return this._post('/chain/push_transaction', {
+      return await this._post('/chain/push_transaction', {
         'signatures': pushTransactionArgs.signatures,
         'compression': 0,
         'packed_context_free_data': '',
         'packed_trx': ser.arrayToHex(pushTransactionArgs.serializedTransaction),
-      }).then((processedTrx) {
-        return processedTrx;
       });
     }
 
