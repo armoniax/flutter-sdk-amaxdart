@@ -585,7 +585,7 @@ Symbol stringToSymbol(String s) {
     throw 'Invalid symbol';
   }
   return Symbol(
-    name: m[0].group(0).toString(),
+    name: m[0].group(2).toString(),
     precision: int.parse(
       m[0].group(1).toString(),
     ),
