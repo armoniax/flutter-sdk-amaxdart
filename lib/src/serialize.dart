@@ -818,7 +818,7 @@ Map<String, Type> createInitialTypes() {
         SerializerState? state,
         required bool allowExtensions,
       }) {
-        buffer.pushArray(numeric.signedDecimalToBinary(8, '' + data));
+        buffer.pushArray(numeric.signedDecimalToBinary(8, data.toString()));
       },
       deserialize: (
         Type self,
@@ -898,7 +898,7 @@ Map<String, Type> createInitialTypes() {
         SerializerState? state,
         required bool allowExtensions,
       }) {
-        buffer.pushArray(numeric.decimalToBinary(16, '' + data));
+        buffer.pushArray(numeric.decimalToBinary(16, data.toString()));
       },
       deserialize: (
         Type self,
@@ -918,7 +918,7 @@ Map<String, Type> createInitialTypes() {
         SerializerState? state,
         required bool allowExtensions,
       }) {
-        buffer.pushArray(numeric.signedDecimalToBinary(16, '' + data));
+        buffer.pushArray(numeric.signedDecimalToBinary(16, data.toString()));
       },
       deserialize: (
         Type self,
