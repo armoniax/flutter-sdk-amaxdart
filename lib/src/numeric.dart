@@ -1,6 +1,8 @@
 import 'dart:typed_data';
 import 'package:pointycastle/pointycastle.dart';
 
+import 'serialize.dart';
+
 /// @module Numeric
 
 var base58Chars = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
@@ -346,4 +348,13 @@ String signatureToString(IKey signature) {
   } else {
     throw 'unrecognized signature format';
   }
+}
+
+/// `name` to `decimal` string
+String nameToNumeric(String accountName) {
+  var buffer = SerialBuffer(Uint8List(0));
+
+  buffer.pushName(accountName);
+
+  return binaryToDecimal(buffer.getUint8List(8));
 }
