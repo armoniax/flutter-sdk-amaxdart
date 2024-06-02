@@ -1,6 +1,6 @@
 name: amaxdart
 description: Armonia Meta Chain RPC API client in Dart language
-version: 0.4.8+20220825
+version: 0.4.8+20221024
 homepage: https://github.com/armoniax/flutter-sdk-amaxdart
 
 environment:

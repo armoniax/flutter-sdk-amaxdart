@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:amaxdart/src/models/currency.dart';
 import 'package:amaxdart_ecc/amaxdart_ecc.dart' as ecc;
 import 'package:http/http.dart' as http;
 
@@ -64,15 +65,14 @@ class AMAXClient {
             body: json.encode(body))
         .timeout(Duration(seconds: this.httpTimeout))
         .then((http.Response response) {
-          if (response.statusCode >= 300) {
-            completer.completeError(response.body);
-          } else {
-            completer.complete(json.decode(response.body));
-          }
-        })
-        .catchError((error, stackTrace) {
-          completer.completeError(error.toString());
-        });
+      if (response.statusCode >= 300) {
+        completer.completeError(response.body);
+      } else {
+        completer.complete(json.decode(response.body));
+      }
+    }).catchError((error, stackTrace) {
+      completer.completeError(error.toString());
+    });
     return completer.future;
   }
 
@@ -195,12 +195,20 @@ class AMAXClient {
     });
   }
 
-  /// Get AMAX account info form the given account name
+  /// Get AMAX account currency balance
   Future<List<Holding>> getCurrencyBalance(String code, String account,
       [String? symbol]) async {
     return this._post('/chain/get_currency_balance',
         {'code': code, 'account': account, 'symbol': symbol}).then((balance) {
       return (balance as List).map((e) => new Holding.fromJson(e)).toList();
+    });
+  }
+
+  /// Get AMAX account currency stats
+  Future<CurrencyStatus> getCurrencyStats(String code, String symbol) async {
+    return this._post('/chain/get_currency_stats',
+        {'code': code, 'symbol': symbol}).then((data) {
+      return CurrencyStatus.fromJson(data[symbol]);
     });
   }
 
@@ -258,22 +266,20 @@ class AMAXClient {
       bool autoFill = true}) async {
     NodeInfo info = await this.getInfo();
 
-    if(autoFill) {
-      Block refBlock = await getBlock((info.headBlockNum! - blocksBehind).toString());
+    if (autoFill) {
+      Block refBlock =
+          await getBlock((info.headBlockNum! - blocksBehind).toString());
       transaction = await _fullFill(transaction, refBlock);
     }
 
     PushTransactionArgs pushTransactionArgs = await _pushTransactionArgs(
         info.chainId!, transactionTypes['transaction']!, transaction, sign);
-
     if (broadcast) {
-      return this._post('/chain/push_transaction', {
+      return await this._post('/chain/push_transaction', {
         'signatures': pushTransactionArgs.signatures,
         'compression': 0,
         'packed_context_free_data': '',
         'packed_trx': ser.arrayToHex(pushTransactionArgs.serializedTransaction),
-      }).then((processedTrx) {
-        return processedTrx;
       });
     }
 
@@ -281,8 +287,7 @@ class AMAXClient {
   }
 
   /// Get data needed to serialize actions in a contract */
-  Future<Contract> _getContract(String accountName,
-      {bool reload = false}) async {
+  Future<Contract> _getContract(String accountName) async {
     var abi = await getRawAbi(accountName);
     var types = ser.getTypesFromAbi(ser.createInitialTypes(), abi.abi!);
     var actions = new Map<String, Type>();
@@ -306,7 +311,7 @@ class AMAXClient {
   /// serialize actions in a transaction
   Future<Transaction> _serializeActions(Transaction transaction) async {
     for (Action action in transaction.actions!) {
-      if(action.data is Map) {
+      if (action.data is Map) {
         String account = action.account!;
         Contract contract = await _getContract(account);
         action.data =
@@ -319,7 +324,7 @@ class AMAXClient {
   /// Convert action data to serialized form (hex) */
   String _serializeActionData(
       Contract contract, String account, String name, Object data) {
-    var action = contract.actions[name];
+    Type? action = contract.actions[name];
     if (action == null) {
       throw "Unknown action $name in contract $account";
     }
@@ -347,7 +352,6 @@ class AMAXClient {
 
     RequiredKeys requiredKeys =
         await getRequiredKeys(transaction, this.keys.keys.toList());
-
     Uint8List serializedTrx = transaction.toBinary(transactionType);
 
     if (sign) {

@@ -1,3 +1,13 @@
+## 0.4.8+20221024
+
+fix:
+
+- stringToSymbol
+
+support:
+
+- /v1/chain/get_currency_stats
+
 ## 0.4.8+20220825
 
 - Change homepage
@@ -67,7 +77,7 @@ support:
 
 ## 0.3.1
 
-Fix: Class name conflict with flutter - https://github.com/primes-network/eosdart/issues/12
+Fix: Class name conflict with flutter - <https://github.com/primes-network/eosdart/issues/12>
 
 ## 0.3.0
 

@@ -19,7 +19,9 @@ class SerializerState {
   /// Have any binary extensions been skipped? */
   bool skippedBinaryExtension;
 
-  SerializerState({this.options = const SerializerOptions(false), this.skippedBinaryExtension = false});
+  SerializerState(
+      {this.options = const SerializerOptions(false),
+      this.skippedBinaryExtension = false});
 }
 
 /// Serialize and deserialize data */
@@ -111,7 +113,8 @@ class SerialBuffer {
     if (readPos + len > length) {
       throw 'Read past end of buffer';
     }
-    var result = Uint8List.view(array!.buffer, array!.offsetInBytes + readPos, len);
+    var result =
+        Uint8List.view(array!.buffer, array!.offsetInBytes + readPos, len);
     readPos += len;
     return result;
   }
@@ -131,7 +134,12 @@ class SerialBuffer {
 
   /// Append a `uint32` */
   void pushUint32(int v) {
-    var t = [(v >> 0) & 0xff, (v >> 8) & 0xff, (v >> 16) & 0xff, (v >> 24) & 0xff];
+    var t = [
+      (v >> 0) & 0xff,
+      (v >> 8) & 0xff,
+      (v >> 16) & 0xff,
+      (v >> 24) & 0xff
+    ];
     push(t);
   }
 
@@ -301,7 +309,7 @@ class SerialBuffer {
 
   /// Append a `symbol_code`. Unlike `symbol`, `symbol_code` doesn't include a precision. */
   void pushSymbolCode(String name) {
-    Uint8List a = Uint8List.fromList(utf8.encode(name));
+    List<int> a = Uint8List.fromList(utf8.encode(name)).toList();
     while (a.length < 8) {
       a.add(0);
     }
@@ -356,7 +364,9 @@ class SerialBuffer {
       ++pos;
     }
     var foundDigit = false;
-    while (pos < s.length && s.codeUnitAt(pos) >= '0'.codeUnitAt(0) && s.codeUnitAt(pos) <= '9'.codeUnitAt(0)) {
+    while (pos < s.length &&
+        s.codeUnitAt(pos) >= '0'.codeUnitAt(0) &&
+        s.codeUnitAt(pos) <= '9'.codeUnitAt(0)) {
       foundDigit = true;
       amount += s[pos];
       ++pos;
@@ -366,7 +376,9 @@ class SerialBuffer {
     }
     if (s[pos] == '.') {
       ++pos;
-      while (pos < s.length && s.codeUnitAt(pos) >= '0'.codeUnitAt(0) && s.codeUnitAt(pos) <= '9'.codeUnitAt(0)) {
+      while (pos < s.length &&
+          s.codeUnitAt(pos) >= '0'.codeUnitAt(0) &&
+          s.codeUnitAt(pos) <= '9'.codeUnitAt(0)) {
         amount += s[pos];
         ++precision;
         ++pos;
@@ -383,7 +395,9 @@ class SerialBuffer {
     var sym = getSymbol();
     var s = numeric.signedBinaryToDecimal(amount, minDigits: sym.precision + 1);
     if (sym.precision != 0) {
-      s = s.substring(0, s.length - sym.precision) + '.' + s.substring(s.length - sym.precision);
+      s = s.substring(0, s.length - sym.precision) +
+          '.' +
+          s.substring(s.length - sym.precision);
     }
     return s + ' ' + sym.name;
   }
@@ -397,9 +411,10 @@ class SerialBuffer {
 
   /// Get a public key */
   String getPublicKey() {
-    var type = get();
+    int type = get();
     var data = getUint8List(numeric.publicKeyDataSize);
-    return numeric.publicKeyToString(numeric.IKey(type as numeric.KeyType, data));
+    return numeric
+        .publicKeyToString(numeric.IKey(numeric.KeyType.values[type], data));
   }
 
   /// Append a private key */
@@ -411,9 +426,10 @@ class SerialBuffer {
 
   /// Get a private key */
   String getPrivateKey() {
-    var type = get();
+    int type = get();
     var data = getUint8List(numeric.privateKeyDataSize);
-    return numeric.privateKeyToString(numeric.IKey(type as numeric.KeyType, data));
+    return numeric
+        .privateKeyToString(numeric.IKey(numeric.KeyType.values[type], data));
   }
 
   /// Append a signature */
@@ -427,7 +443,8 @@ class SerialBuffer {
   String getSignature() {
     var type = get();
     var data = getUint8List(numeric.signatureDataSize);
-    return numeric.signatureToString(numeric.IKey(type as numeric.KeyType, data));
+    return numeric
+        .signatureToString(numeric.IKey(numeric.KeyType.values[type], data));
   }
 } // SerialBuffer
 
@@ -471,7 +488,7 @@ Type createType({
 }
 
 int checkRange(int orig, int converted) {
-  if (orig.isNaN || converted.isNaN || (!(orig is int) && !(orig is String))) {
+  if (orig.isNaN || converted.isNaN) {
     throw 'Expected number';
   }
   if (orig != converted) {
@@ -494,9 +511,6 @@ int dateToTimePointSec(String date) {
 
 /// Convert hex to binary data */
 Uint8List hexToUint8List(String hex) {
-  if (!(hex is String)) {
-    throw 'Expected string containing hex digits';
-  }
   if (hex.length % 2 != 0) {
     throw 'Odd number of hex digits';
   }
@@ -549,13 +563,17 @@ String timePointSecToDate(int sec) {
 
 /// Convert date in ISO format to `block_timestamp_type` (half-seconds since a different epoch) */
 int dateToBlockTimestamp(String date) {
-  return ((checkDateParse(date + 'Z').subtract(Duration(milliseconds: 946684800000))).millisecondsSinceEpoch / 500)
+  return ((checkDateParse(date + 'Z')
+                  .subtract(Duration(milliseconds: 946684800000)))
+              .millisecondsSinceEpoch /
+          500)
       .round();
 }
 
 /// Convert `block_timestamp_type` (half-seconds since a different epoch) to to date in ISO format */
 String blockTimestampToDate(int slot) {
-  var s = (DateTime.fromMillisecondsSinceEpoch(slot * 500 + 946684800000)).toIso8601String();
+  var s = (DateTime.fromMillisecondsSinceEpoch(slot * 500 + 946684800000))
+      .toIso8601String();
   return s.substring(0, s.length - 1);
 }
 
@@ -566,7 +584,12 @@ Symbol stringToSymbol(String s) {
   if (!exp.hasMatch(s)) {
     throw 'Invalid symbol';
   }
-  return Symbol(name: m[2].toString(), precision: int.parse([1].toString()));
+  return Symbol(
+    name: m[0].group(2).toString(),
+    precision: int.parse(
+      m[0].group(1).toString(),
+    ),
+  );
 }
 
 /// Convert `Symbol` to `string`. format: `precision,NAME`. */
@@ -579,11 +602,13 @@ bool supportedAbiVersion(String version) {
   return version.startsWith('amax::abi/1.');
 }
 
-void serializeStruct(Type self, SerialBuffer buffer, dynamic data, {SerializerState? state, allowExtensions = true}) {
+void serializeStruct(Type self, SerialBuffer buffer, dynamic data,
+    {SerializerState? state, allowExtensions = true}) {
   if (state == null) state = SerializerState();
   // try {
   if (self.base != null) {
-    self.base!.serialize?.call(self.base, buffer, data, state: state, allowExtensions: allowExtensions);
+    self.base!.serialize?.call(self.base, buffer, data,
+        state: state, allowExtensions: allowExtensions);
   }
   Map dy = data as dynamic;
   for (var field in self.fields) {
@@ -592,12 +617,20 @@ void serializeStruct(Type self, SerialBuffer buffer, dynamic data, {SerializerSt
         throw 'unexpected ' + self.name + '.' + field.name;
       }
       field.type!.serialize?.call(field.type, buffer, dy[field.name],
-          state: state, allowExtensions: allowExtensions && field == self.fields[self.fields.length - 1]);
+          state: state,
+          allowExtensions:
+              allowExtensions && field == self.fields[self.fields.length - 1]);
     } else {
       if (allowExtensions && field.type!.extensionOf != null) {
         state.skippedBinaryExtension = true;
       } else {
-        throw 'missing ' + self.name + '.' + field.name + ' (type=' + field.type!.name + ')';
+        throw 'missing ' +
+            self.name +
+            '.' +
+            field.name +
+            ' (type=' +
+            field.type!.name +
+            ')';
       }
     }
   }
@@ -606,21 +639,25 @@ void serializeStruct(Type self, SerialBuffer buffer, dynamic data, {SerializerSt
   // }
 }
 
-Object deserializeStruct(Type self, SerialBuffer buffer, {SerializerState? state, allowExtensions = true}) {
+Object deserializeStruct(Type self, SerialBuffer buffer,
+    {SerializerState? state, allowExtensions = true}) {
   if (state == null) state = SerializerState();
   try {
     var result;
     if (self.base != null) {
-      result = self.base!.deserialize?.call(self.base, buffer, state: state, allowExtensions: allowExtensions);
+      result = self.base!.deserialize?.call(self.base, buffer,
+          state: state, allowExtensions: allowExtensions);
     } else {
       result = {};
     }
     for (var field in self.fields) {
-      if (allowExtensions && field.type!.extensionOf != null && !buffer.haveReadData()) {
+      if (allowExtensions &&
+          field.type!.extensionOf != null &&
+          !buffer.haveReadData()) {
         state.skippedBinaryExtension = true;
       } else {
-        result[field.name] =
-            field.type!.deserialize?.call(field.type, buffer, state: state, allowExtensions: allowExtensions);
+        result[field.name] = field.type!.deserialize?.call(field.type, buffer,
+            state: state, allowExtensions: allowExtensions);
       }
     }
     return result;
@@ -761,7 +798,7 @@ Map<String, Type> createInitialTypes() {
         SerializerState? state,
         required bool allowExtensions,
       }) {
-        buffer.pushArray(numeric.decimalToBinary(8, '' + data));
+        buffer.pushArray(numeric.decimalToBinary(8, data.toString()));
       },
       deserialize: (
         Type self,
@@ -781,7 +818,7 @@ Map<String, Type> createInitialTypes() {
         SerializerState? state,
         required bool allowExtensions,
       }) {
-        buffer.pushArray(numeric.signedDecimalToBinary(8, '' + data));
+        buffer.pushArray(numeric.signedDecimalToBinary(8, data.toString()));
       },
       deserialize: (
         Type self,
@@ -861,7 +898,7 @@ Map<String, Type> createInitialTypes() {
         SerializerState? state,
         required bool allowExtensions,
       }) {
-        buffer.pushArray(numeric.decimalToBinary(16, '' + data));
+        buffer.pushArray(numeric.decimalToBinary(16, data.toString()));
       },
       deserialize: (
         Type self,
@@ -881,7 +918,7 @@ Map<String, Type> createInitialTypes() {
         SerializerState? state,
         required bool allowExtensions,
       }) {
-        buffer.pushArray(numeric.signedDecimalToBinary(16, '' + data));
+        buffer.pushArray(numeric.signedDecimalToBinary(16, data.toString()));
       },
       deserialize: (
         Type self,
@@ -1279,7 +1316,8 @@ Map<String, Type> createInitialTypes() {
   return result;
 } // createInitialTypes()
 
-serializeVariant(Type self, SerialBuffer buffer, dynamic data, {SerializerState? state, allowExtensions = true}) {
+serializeVariant(Type self, SerialBuffer buffer, dynamic data,
+    {SerializerState? state, allowExtensions = true}) {
   if (state == null) state = SerializerState();
   if (!(data is List) || data.length != 2 || !(data[0] is String)) {
     throw 'expected variant: ["type", value]';
@@ -1291,10 +1329,12 @@ serializeVariant(Type self, SerialBuffer buffer, dynamic data, {SerializerState?
     throw 'type "$b" is not valid for variant';
   }
   buffer.pushVaruint32(i);
-  self.fields[i].type!.serialize?.call(self.fields[i].type, buffer, b, state: state, allowExtensions: allowExtensions);
+  self.fields[i].type!.serialize?.call(self.fields[i].type, buffer, b,
+      state: state, allowExtensions: allowExtensions);
 }
 
-deserializeVariant(Type self, SerialBuffer buffer, {SerializerState? state, allowExtensions = true}) {
+deserializeVariant(Type self, SerialBuffer buffer,
+    {SerializerState? state, allowExtensions = true}) {
   if (state == null) state = SerializerState();
   var i = buffer.getVaruint32();
   if (i >= self.fields.length) {
@@ -1303,55 +1343,68 @@ deserializeVariant(Type self, SerialBuffer buffer, {SerializerState? state, allo
   var field = self.fields[i];
   return [
     field.name,
-    field.type!.deserialize?.call(field.type, buffer, state: state, allowExtensions: allowExtensions)
+    field.type!.deserialize?.call(field.type, buffer,
+        state: state, allowExtensions: allowExtensions)
   ];
 }
 
-serializeArray(Type self, SerialBuffer buffer, dynamic data, {SerializerState? state, allowExtensions = true}) {
+serializeArray(Type self, SerialBuffer buffer, dynamic data,
+    {SerializerState? state, allowExtensions = true}) {
   if (state == null) state = SerializerState();
   buffer.pushVaruint32((data as List).length);
   for (var item in data) {
-    self.arrayOf!.serialize?.call(self.arrayOf, buffer, item, state: state, allowExtensions: false);
+    self.arrayOf!.serialize?.call(self.arrayOf, buffer, item,
+        state: state, allowExtensions: false);
   }
 }
 
-deserializeArray(Type self, SerialBuffer buffer, {SerializerState? state, allowExtensions = true}) {
+deserializeArray(Type self, SerialBuffer buffer,
+    {SerializerState? state, allowExtensions = true}) {
   if (state == null) state = SerializerState();
   var len = buffer.getVaruint32();
   var result = [];
   for (var i = 0; i < len; ++i) {
-    result.add(self.arrayOf!.deserialize?.call(self.arrayOf, buffer, state: state, allowExtensions: false));
+    result.add(self.arrayOf!.deserialize
+        ?.call(self.arrayOf, buffer, state: state, allowExtensions: false));
   }
   return result;
 }
 
-serializeOptional(Type self, SerialBuffer buffer, dynamic data, {SerializerState? state, allowExtensions = true}) {
+serializeOptional(Type self, SerialBuffer buffer, dynamic data,
+    {SerializerState? state, allowExtensions = true}) {
   if (state == null) state = SerializerState();
   if (data == null) {
     buffer.push([0]);
   } else {
     buffer.push([1]);
-    self.optionalOf!.serialize?.call(self.optionalOf, buffer, data, state: state, allowExtensions: allowExtensions);
+    self.optionalOf!.serialize?.call(self.optionalOf, buffer, data,
+        state: state, allowExtensions: allowExtensions);
   }
 }
 
-deserializeOptional(Type self, SerialBuffer buffer, {SerializerState? state, allowExtensions = true}) {
+deserializeOptional(Type self, SerialBuffer buffer,
+    {SerializerState? state, allowExtensions = true}) {
   if (state == null) state = SerializerState();
   if (buffer.get() != 0) {
-    return self.optionalOf!.deserialize?.call(self.optionalOf, buffer, state: state, allowExtensions: allowExtensions);
+    return self.optionalOf!.deserialize?.call(self.optionalOf, buffer,
+        state: state, allowExtensions: allowExtensions);
   } else {
     return null;
   }
 }
 
-serializeExtension(Type self, SerialBuffer buffer, dynamic data, {SerializerState? state, allowExtensions = true}) {
+serializeExtension(Type self, SerialBuffer buffer, dynamic data,
+    {SerializerState? state, allowExtensions = true}) {
   if (state == null) state = SerializerState();
-  self.extensionOf!.serialize?.call(self.extensionOf, buffer, data, state: state, allowExtensions: allowExtensions);
+  self.extensionOf!.serialize?.call(self.extensionOf, buffer, data,
+      state: state, allowExtensions: allowExtensions);
 }
 
-deserializeExtension(Type self, SerialBuffer buffer, {SerializerState? state, allowExtensions = true}) {
+deserializeExtension(Type self, SerialBuffer buffer,
+    {SerializerState? state, allowExtensions = true}) {
   if (state == null) state = SerializerState();
-  return self.extensionOf!.deserialize?.call(self.extensionOf, buffer, state: state, allowExtensions: allowExtensions);
+  return self.extensionOf!.deserialize?.call(self.extensionOf, buffer,
+      state: state, allowExtensions: allowExtensions);
 }
 
 /// Get type from `types` */
@@ -1398,7 +1451,8 @@ Map<String, Type> getTypesFromAbi(Map<String, Type> initialTypes, Abi abi) {
   var types = Map.from(initialTypes).cast<String, Type>();
   if (abi.types != null) {
     for (var item in abi.types!) {
-      types[item.new_type_name] = createType(name: item.new_type_name, aliasOfName: item.type);
+      types[item.new_type_name] =
+          createType(name: item.new_type_name, aliasOfName: item.type);
     }
   }
   if (abi.structs != null) {
@@ -1406,7 +1460,11 @@ Map<String, Type> getTypesFromAbi(Map<String, Type> initialTypes, Abi abi) {
       types[str.name!] = createType(
           name: str.name!,
           baseName: str.base ?? '',
-          fields: str.fields?.map((item) => Field(name: item.name, typeName: item.type, type: null)).toList() ?? [],
+          fields: str.fields
+                  ?.map((item) =>
+                      Field(name: item.name, typeName: item.type, type: null))
+                  .toList() ??
+              [],
           serialize: serializeStruct,
           deserialize: deserializeStruct);
     }
@@ -1415,7 +1473,10 @@ Map<String, Type> getTypesFromAbi(Map<String, Type> initialTypes, Abi abi) {
     for (var v in abi.variants!) {
       types[v.name!] = createType(
         name: v.name!,
-        fields: v.types?.map((s) => Field(name: s, typeName: s, type: null)).toList() ?? [],
+        fields: v.types
+                ?.map((s) => Field(name: s, typeName: s, type: null))
+                .toList() ??
+            [],
         serialize: serializeVariant,
         deserialize: deserializeVariant,
       );
